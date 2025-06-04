@@ -107,42 +107,11 @@ public static class TvdbSdkExtensions
             return false;
         }
 
-        var mappedlanguage = language?.ToLowerInvariant() switch
-        {
-            "zh-tw" => "zhtw", // Unique case for zh-TW
-            "pt-br" => "pt", // Unique case for pt-BR0
-            "pt-pt" => "por", // Unique case for pt-PT
-            _ => null,
-        };
-
-        if (mappedlanguage is not null)
-        {
-            return translation.Equals(mappedlanguage, StringComparison.OrdinalIgnoreCase);
-        }
-
         // try to find a match (ISO 639-2)
         return TvdbCultureInfo.GetCultureInfo(language!)?
             .ThreeLetterISOLanguageNames?
             .Contains(translation, StringComparer.OrdinalIgnoreCase)
             ?? false;
-    }
-
-    /// <summary>
-    /// Normalize <see cref="Language"/> to jellyfin format.
-    /// </summary>
-    /// <remarks>TVDb uses 3 character language.</remarks>
-    /// <param name="language">The <see cref="Language"/>.</param>
-    /// <returns>Normalized language.</returns>
-    private static string? NormalizeToJellyfin(this Language? language)
-    {
-        return language?.Id?.ToLowerInvariant() switch
-        {
-            "zhtw" => "zh-TW", // Unique case for zhtw
-            "pt" => "pt-BR", // Unique case for pt
-            "por" => "pt-PT", // Unique case for por
-            var tvdbLang when tvdbLang is { } => TvdbCultureInfo.GetCultureInfo(tvdbLang)?.TwoLetterISOLanguageName, // to (ISO 639-1)
-            _ => null,
-        };
     }
 
     /// <summary>
@@ -236,7 +205,7 @@ public static class TvdbSdkExtensions
             Width = Convert.ToInt32(imageDimension.Width, CultureInfo.InvariantCulture),
             Height = Convert.ToInt32(imageDimension.Height, CultureInfo.InvariantCulture),
             Type = type.Value,
-            Language = language.NormalizeToJellyfin()?.ToLowerInvariant(),
+            Language = TvdbCultureInfo.GetCultureInfo(language?.Id?.ToLowerInvariant())?.TwoLetterISOLanguageName,
             ProviderName = providerName,
             ThumbnailUrl = thumbnailUrl
         };

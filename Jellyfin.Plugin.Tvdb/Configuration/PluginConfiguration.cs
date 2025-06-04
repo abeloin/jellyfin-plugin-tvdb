@@ -72,6 +72,11 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         public bool IncludeOriginalCountryInTags { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether to map Jellyfin French (Canada)[fr-ca:frc] culture to French[fr:fra] since it doesn't exist on TheTVDB.
+        /// </summary>
+        public bool IsMapFrenchCanadaToFrench { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the metadata update in hours for the Check for Metadata Updates Scheduled Task.
         /// </summary>
         public int MetadataUpdateInHours

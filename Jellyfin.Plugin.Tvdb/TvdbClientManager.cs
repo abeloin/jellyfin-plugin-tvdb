@@ -53,6 +53,7 @@ public class TvdbClientManager : IDisposable
 
         // Set the cultures and countries for the TvdbCultureInfo
         TvdbCultureInfo.SetCultures(localizationManager.GetCultures().ToArray());
+        TvdbCultureInfo.SetMappedCultures();
         TvdbCultureInfo.SetCountries(localizationManager.GetCountries().ToArray());
     }
 

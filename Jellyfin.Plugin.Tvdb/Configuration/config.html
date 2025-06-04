@@ -54,6 +54,10 @@
                         <input is="emby-checkbox" type="checkbox" id="includeOriginalCountryInTags" />
                         <span>Include original country of the movie or series in tags.</span>
                     </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="isMapFrenchCanadaToFrench" />
+                        <span>Remap French(Canada) to French.</span>
+                    </label>
                     <div class="sectionTitleContainer flex align-items-center">
                         <h2 class="sectionTitle">Missing Episode Provider Settings:</h2>
                     </div>
@@ -119,6 +123,7 @@
                     document.getElementById('importSeasonName').checked = config.ImportSeasonName
                     document.getElementById('fallbackToOriginalLanguage').checked = config.FallbackToOriginalLanguage;
                     document.getElementById('includeOriginalCountryInTags').checked = config.IncludeOriginalCountryInTags;
+                    document.getElementById('isMapFrenchCanadaToFrench').checked = config.IsMapFrenchCanadaToFrench;
                   
                     // Missing Episode Provider Settings
                     document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials;
@@ -146,6 +151,7 @@
                     config.ImportSeasonName = document.getElementById('importSeasonName').checked;
                     config.FallbackToOriginalLanguage = document.getElementById('fallbackToOriginalLanguage').checked;
                     config.IncludeOriginalCountryInTags = document.getElementById('includeOriginalCountryInTags').checked;
+                    config.IsMapFrenchCanadaToFrench = document.getElementById('isMapFrenchCanadaToFrench').checked;
                   
                     // Missing Episode Provider Settings
                     config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
