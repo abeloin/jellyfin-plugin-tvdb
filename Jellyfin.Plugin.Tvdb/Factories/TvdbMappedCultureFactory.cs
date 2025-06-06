@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using MediaBrowser.Model.Globalization;
 
-namespace Jellyfin.Plugin.Tvdb
+namespace Jellyfin.Plugin.Tvdb.Factories
 {
     /// <summary>
     /// Mapped culture specific to theTVDB.
@@ -8,13 +9,13 @@ namespace Jellyfin.Plugin.Tvdb
     public static class TvdbMappedCultureFactory
     {
         /// <summary>
-        /// Map 'French (Canada)' to 'French,' as TheTVDB doesn't have a variant for French and 'frc' isn't a valid ISO 639-2 code.
+        /// Map 'French (Canada)' to 'French,' as TheTVDB doesn't have a variant for French and 'frc' isn't a valid ISO 639-2 code for French.
         /// </summary>
         /// <returns>CultureDto.</returns>
-        public static CultureDto FrenchCanadaCulture()
+        private static CultureDto FrenchCanadaCulture()
         {
-            string name = "French (Canada)";
-            string twoLetterISOLanguageName = "fr-CA";
+            var name = "Français (Canada)";
+            var twoLetterISOLanguageName = "fr-CA";
             string[] threeLetterISOLanguageNames = { "fra" };
             return new CultureDto(name: name, displayName: name, twoLetterISOLanguageName: twoLetterISOLanguageName, threeLetterISOLanguageNames: threeLetterISOLanguageNames);
         }
@@ -24,10 +25,10 @@ namespace Jellyfin.Plugin.Tvdb
         /// Also for <see cref="TvdbSdkExtensions.CreateRemoteImageInfo"/> to map back to 'Portuguese (Brazil)'.
         /// </summary>
         /// <returns>CultureDto.</returns>
-        internal static CultureDto PortugueseBrazilCulture()
+        private static CultureDto PortugueseBrazilCulture()
         {
-            string name = "Portuguese (Brazil)";
-            string twoLetterISOLanguageName = "pt-BR";
+            var name = "Português (Brasil)";
+            var twoLetterISOLanguageName = "pt-BR";
             string[] threeLetterISOLanguageNames = { "pt" };
             return new CultureDto(name: name, displayName: name, twoLetterISOLanguageName: twoLetterISOLanguageName, threeLetterISOLanguageNames: threeLetterISOLanguageNames);
         }
@@ -36,10 +37,10 @@ namespace Jellyfin.Plugin.Tvdb
         /// For <see cref="TvdbSdkExtensions.CreateRemoteImageInfo"/> to map back to 'Portuguese (Portugal)'.
         /// </summary>
         /// <returns>CultureDto.</returns>
-        internal static CultureDto PortuguesePortugalCulture()
+        private static CultureDto PortuguesePortugalCulture()
         {
-            string name = "Portuguese (Portugal)";
-            string twoLetterISOLanguageName = "pt-PT";
+            var name = "Português (Portugal)";
+            var twoLetterISOLanguageName = "pt-PT";
             string[] threeLetterISOLanguageNames = { "por" };
             return new CultureDto(name: name, displayName: name, twoLetterISOLanguageName: twoLetterISOLanguageName, threeLetterISOLanguageNames: threeLetterISOLanguageNames);
         }
@@ -49,12 +50,33 @@ namespace Jellyfin.Plugin.Tvdb
         /// Also for <see cref="TvdbSdkExtensions.CreateRemoteImageInfo"/> to map back to 'Chinese (Taiwan)'.
         /// </summary>
         /// <returns>CultureDto.</returns>
-        internal static CultureDto ChineseTaiwanCulture()
+        private static CultureDto ChineseTaiwanCulture()
         {
-            string name = "Chinese (Taiwan)";
-            string twoLetterISOLanguageName = "zh-TW";
+            var name = "漢語 (繁體字)";
+            var twoLetterISOLanguageName = "zh-TW";
             string[] threeLetterISOLanguageNames = { "zhtw" };
             return new CultureDto(name: name, displayName: name, twoLetterISOLanguageName: twoLetterISOLanguageName, threeLetterISOLanguageNames: threeLetterISOLanguageNames);
+        }
+
+        /// <summary>
+        /// Generate an array of CultureDto about the mapping between Jellyfin and theTVDB special cases.
+        /// </summary>
+        /// <param name="isMapFrenchCanadaToFrench"> Map French(Canada) to French when searching.</param>
+        /// <returns>Overriden CultureDto array.</returns>
+        public static CultureDto[] GenerateTvdbMappedCultureDto(bool isMapFrenchCanadaToFrench)
+        {
+            List<CultureDto> mappedcultures = new List<CultureDto>();
+
+            mappedcultures.Add(TvdbMappedCultureFactory.PortuguesePortugalCulture());
+            mappedcultures.Add(TvdbMappedCultureFactory.PortugueseBrazilCulture());
+            mappedcultures.Add(TvdbMappedCultureFactory.ChineseTaiwanCulture());
+
+            if (isMapFrenchCanadaToFrench)
+            {
+                mappedcultures.Add(TvdbMappedCultureFactory.FrenchCanadaCulture());
+            }
+
+            return mappedcultures.ToArray();
         }
     }
 }

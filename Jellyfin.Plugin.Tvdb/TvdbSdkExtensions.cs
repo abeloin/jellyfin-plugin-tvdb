@@ -100,6 +100,12 @@ public static class TvdbSdkExtensions
             .FirstOrDefault(overview => overview != null);
     }
 
+    /// <summary>
+    /// Check if the available translation match the requested language.
+    /// </summary>
+    /// <param name="translation">One of the avalaible translation (TVDB language code.)</param>
+    /// <param name="language">Requested language (Jellyfin language code.)</param>
+    /// <returns>bool.</returns>
     private static bool IsMatch(this string translation, string? language)
     {
         if (string.IsNullOrWhiteSpace(language))

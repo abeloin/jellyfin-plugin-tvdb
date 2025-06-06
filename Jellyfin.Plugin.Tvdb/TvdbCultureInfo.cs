@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Jellyfin.Extensions;
+using Jellyfin.Plugin.Tvdb.Factories;
 using MediaBrowser.Model.Globalization;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -27,7 +27,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         internal static void SetMappedCultures()
         {
-            _mappedcultures = GenerateTvdbMappedCultureDto();
+            _mappedcultures = TvdbMappedCultureFactory.GenerateTvdbMappedCultureDto(IsMapFrenchCanadaToFrench);
         }
 
         internal static void SetCountries(CountryInfo[] countries)
@@ -49,7 +49,8 @@ namespace Jellyfin.Plugin.Tvdb
 
             foreach (var mappedCulture in _mappedcultures)
             {
-                if (language.Equals(mappedCulture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
+                if (language.Equals(mappedCulture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase)
+                    || language.Equals(mappedCulture.ThreeLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
                 {
                     return mappedCulture;
                 }
@@ -87,26 +88,6 @@ namespace Jellyfin.Plugin.Tvdb
             }
 
             return default;
-        }
-
-        /// <summary>
-        /// Aggregate all Jellyfin to theTVDB special cases.
-        /// </summary>
-        /// <returns>CultureDto[].</returns>
-        internal static CultureDto[] GenerateTvdbMappedCultureDto()
-        {
-            List<CultureDto> mappedcultures = new List<CultureDto>();
-
-            mappedcultures.Add(TvdbMappedCultureFactory.PortuguesePortugalCulture());
-            mappedcultures.Add(TvdbMappedCultureFactory.PortugueseBrazilCulture());
-            mappedcultures.Add(TvdbMappedCultureFactory.ChineseTaiwanCulture());
-
-            if (IsMapFrenchCanadaToFrench)
-            {
-                mappedcultures.Add(TvdbMappedCultureFactory.FrenchCanadaCulture());
-            }
-
-            return mappedcultures.ToArray();
         }
     }
 }
