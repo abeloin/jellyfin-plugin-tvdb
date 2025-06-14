@@ -7,7 +7,7 @@ using Jellyfin.Extensions;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
-
+using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb;
@@ -114,7 +114,7 @@ public static class TvdbSdkExtensions
         }
 
         // try to find a match (ISO 639-2)
-        return TvdbCultureInfo.GetCultureInfo(language!)?
+        return TvdbCultureInfo.GetCultureDtoFromIso6391(language!)?
             .ThreeLetterISOLanguageNames?
             .Contains(translation, StringComparer.OrdinalIgnoreCase)
             ?? false;
@@ -166,8 +166,9 @@ public static class TvdbSdkExtensions
     /// <param name="providerName">The provider name.</param>
     /// <param name="type">The <see cref="ImageType"/>.</param>
     /// <param name="language">The <see cref="Language"/>.</param>
+    /// <param name="logger">ILogger.</param>
     /// <returns>A <see cref="RemoteImageInfo"/>, or null if <see cref="ImageType"/> is <see langword="null"/>.</returns>
-    public static RemoteImageInfo? CreateImageInfo(this ArtworkExtendedRecord artworkRecord, string providerName, ImageType? type, Language? language)
+    public static RemoteImageInfo? CreateImageInfo(this ArtworkExtendedRecord artworkRecord, string providerName, ImageType? type, Language? language, ILogger logger)
     {
         return CreateRemoteImageInfo(
             artworkRecord.Image,
@@ -175,7 +176,8 @@ public static class TvdbSdkExtensions
             (artworkRecord.Width, artworkRecord.Height),
             providerName,
             type,
-            language);
+            language,
+            logger);
     }
 
     /// <summary>
@@ -185,8 +187,9 @@ public static class TvdbSdkExtensions
     /// <param name="providerName">The provider name.</param>
     /// <param name="type">The <see cref="ImageType"/>.</param>
     /// <param name="language">The <see cref="Language"/>.</param>
+    /// <param name="logger">ILogger.</param>
     /// <returns>A <see cref="RemoteImageInfo"/>, or null if <see cref="ImageType"/> is <see langword="null"/>.</returns>
-    public static RemoteImageInfo? CreateImageInfo(this ArtworkBaseRecord artworkRecord, string providerName, ImageType? type, Language? language)
+    public static RemoteImageInfo? CreateImageInfo(this ArtworkBaseRecord artworkRecord, string providerName, ImageType? type, Language? language, ILogger logger)
     {
         return CreateRemoteImageInfo(
             artworkRecord.Image,
@@ -194,10 +197,11 @@ public static class TvdbSdkExtensions
             (artworkRecord.Width, artworkRecord.Height),
             providerName,
             type,
-            language);
+            language,
+            logger);
     }
 
-    private static RemoteImageInfo? CreateRemoteImageInfo(string imageUrl, string thumbnailUrl, (long? Width, long? Height) imageDimension, string providerName, ImageType? type, Language? language)
+    private static RemoteImageInfo? CreateRemoteImageInfo(string imageUrl, string thumbnailUrl, (long? Width, long? Height) imageDimension, string providerName, ImageType? type, Language? language, ILogger logger)
     {
         if (type is null)
         {
@@ -211,7 +215,7 @@ public static class TvdbSdkExtensions
             Width = Convert.ToInt32(imageDimension.Width, CultureInfo.InvariantCulture),
             Height = Convert.ToInt32(imageDimension.Height, CultureInfo.InvariantCulture),
             Type = type.Value,
-            Language = TvdbCultureInfo.GetCultureInfo(language?.Id?.ToLowerInvariant())?.TwoLetterISOLanguageName,
+            Language = TvdbCultureInfo.GetCultureDtoFromIso6392(language?.Id?.ToLowerInvariant(), logger)?.TwoLetterISOLanguageName,
             ProviderName = providerName,
             ThumbnailUrl = thumbnailUrl
         };

@@ -9,12 +9,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Tvdb.Configuration;
+using Jellyfin.Plugin.Tvdb.Factories;
 using Jellyfin.Plugin.Tvdb.SeasonClient;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Globalization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
 
 using Action = Tvdb.Sdk.Action;
@@ -35,6 +37,8 @@ public class TvdbClientManager : IDisposable
     private readonly MemoryCache _memoryCache;
     private readonly SdkClientSettings _sdkClientSettings;
 
+    private readonly ILogger<TvdbClientManager> _logger;
+
     private DateTime _tokenUpdatedAt;
 
     /// <summary>
@@ -42,8 +46,10 @@ public class TvdbClientManager : IDisposable
     /// </summary>
     /// <param name="applicationHost">Instance of the <see cref="IApplicationHost"/> interface.</param>
     /// <param name="localizationManager">Instance of the <see cref="ILocalizationManager"/> interface.</param>
-    public TvdbClientManager(IApplicationHost applicationHost, ILocalizationManager localizationManager)
+    /// <param name="logger">Instance of the <see cref="ILogger{TvdbClientManager}"/> interface.</param>
+    public TvdbClientManager(IApplicationHost applicationHost, ILocalizationManager localizationManager, ILogger<TvdbClientManager> logger)
     {
+        _logger = logger;
         _serviceProvider = ConfigureService(applicationHost);
         _httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
         _sdkClientSettings = _serviceProvider.GetRequiredService<SdkClientSettings>();
@@ -53,7 +59,7 @@ public class TvdbClientManager : IDisposable
 
         // Set the cultures and countries for the TvdbCultureInfo
         TvdbCultureInfo.SetCultures(localizationManager.GetCultures().ToArray());
-        TvdbCultureInfo.SetMappedCultures();
+        TvdbCultureInfo.SetMappedCultures(TvdbMappingCultureFactory.GenerateTvdbMapping(TvdbPlugin.Instance?.Configuration.IsMapFrenchCanadaToFrench ?? false, _logger).ToArray());
         TvdbCultureInfo.SetCountries(localizationManager.GetCountries().ToArray());
     }
 

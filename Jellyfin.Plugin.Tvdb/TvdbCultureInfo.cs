@@ -1,8 +1,8 @@
 using System;
-using System.Linq;
-using Jellyfin.Extensions;
-using Jellyfin.Plugin.Tvdb.Factories;
+using Jellyfin.Plugin.Tvdb.Models;
 using MediaBrowser.Model.Globalization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jellyfin.Plugin.Tvdb
 {
@@ -12,10 +12,8 @@ namespace Jellyfin.Plugin.Tvdb
     internal static class TvdbCultureInfo
     {
         private static CultureDto[] _cultures = Array.Empty<CultureDto>();
-        private static CultureDto[] _mappedcultures = Array.Empty<CultureDto>();
+        private static TvdbCultureDto[] _mappedcultures = Array.Empty<TvdbCultureDto>();
         private static CountryInfo[] _countries = Array.Empty<CountryInfo>();
-
-        private static bool IsMapFrenchCanadaToFrench => TvdbPlugin.Instance?.Configuration.IsMapFrenchCanadaToFrench ?? false;
 
         internal static void SetCultures(CultureDto[] cultures)
         {
@@ -23,11 +21,12 @@ namespace Jellyfin.Plugin.Tvdb
         }
 
         /// <summary>
-        /// List of special mapping between TheTvDB and Jellyfin.
+        /// Sets _mappedcultures.
         /// </summary>
-        internal static void SetMappedCultures()
+        /// <param name="mappedcultures">Special mapping between TheTvDB and Jellyfin.</param>
+        internal static void SetMappedCultures(TvdbCultureDto[] mappedcultures)
         {
-            _mappedcultures = TvdbMappedCultureFactory.GenerateTvdbMappedCultureDto(IsMapFrenchCanadaToFrench);
+            _mappedcultures = mappedcultures;
         }
 
         internal static void SetCountries(CountryInfo[] countries)
@@ -36,42 +35,90 @@ namespace Jellyfin.Plugin.Tvdb
         }
 
         /// <summary>
-        /// Gets the cultureinfo for the given language.
+        /// Gets the <see cref="CultureDto"/> for the given ISO 639-1 code.
         /// </summary>
-        /// <param name="language">Language.</param>
-        /// <returns>CultureInfo.</returns>
-        internal static CultureDto? GetCultureInfo(string? language)
+        /// <param name="languageCode">ISO 639-1 code (jellyfin.)</param>
+        /// <returns>Return the matching <see cref="CultureDto"/>, if found.</returns>
+        internal static CultureDto? GetCultureDtoFromIso6391(string? languageCode)
         {
-            if (language == null)
+            if (languageCode == null)
             {
-                return default;
+                return null;
             }
 
             foreach (var mappedCulture in _mappedcultures)
             {
-                if (language.Equals(mappedCulture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase)
-                    || language.Equals(mappedCulture.ThreeLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
+                if (languageCode.Equals(mappedCulture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return mappedCulture;
+                    return (CultureDto)mappedCulture;
                 }
             }
 
+            return GetCultureDto(languageCode, NullLogger.Instance) ?? default;
+        }
+
+        /// <summary>
+        /// Gets the <see cref="CultureDto"/> for the given ISO 639-2(T) code.
+        /// </summary>
+        /// <param name="languageCode">ISO 639-2(T) code (TVDB.)</param>
+        /// <param name="logger">ILogger.</param>
+        /// <returns>Return the matching <see cref="CultureDto"/>, if found.</returns>
+        internal static CultureDto? GetCultureDtoFromIso6392(string? languageCode, ILogger logger)
+        {
+            if (languageCode == null)
+            {
+                return null;
+            }
+
+            foreach (var mappedCulture in _mappedcultures)
+            {
+                if (languageCode.Equals(mappedCulture.ThreeLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Ignore a matching result if we want the one from jellyfin.
+                    if (!mappedCulture.JellyfinToTvdbOnly)
+                    {
+                        logger.LogDebug("Found TVDB special mapping for {LanguageCode}: {MappedCultureName}", languageCode, mappedCulture.Name);
+                        return (CultureDto)mappedCulture;
+                    }
+                    else
+                    {
+                        logger.LogDebug(
+                            "Skip: found TVDB special mapping for {LanguageCode}: {MappedCultureName}. [Reason: one way mapping]",
+                            languageCode,
+                            mappedCulture.Name);
+                        logger.LogTrace("TvdbCultureDto object dump: {MappedCultureToString}", mappedCulture.ToString());
+                    }
+                }
+            }
+
+            return GetCultureDto(languageCode, logger) ?? default;
+        }
+
+        /// <summary>
+        /// Gets the <see cref="CultureDto"/> from jellyfin for the given language.
+        /// </summary>
+        /// <param name="languageCode">Language in ISO 639-1 or ISO 639-2(T) form.</param>
+        /// <param name="logger">ILogger.</param>
+        /// <returns>Return the matching <see cref="CultureDto"/>, if found.</returns>
+        private static CultureDto? GetCultureDto(string languageCode, ILogger logger)
+        {
             foreach (var culture in _cultures)
             {
-                if (language.Equals(culture.DisplayName, StringComparison.OrdinalIgnoreCase)
-                    || language.Equals(culture.Name, StringComparison.OrdinalIgnoreCase)
-                    || culture.ThreeLetterISOLanguageNames.Contains(language, StringComparison.OrdinalIgnoreCase)
-                    || language.Equals(culture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
+                if (languageCode.Equals(culture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase)
+                    || languageCode.Equals(culture.ThreeLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
                 {
+                    logger.LogDebug("Found jellyfin mapping for {LanguageCode}: {CultureName}", languageCode, culture.Name);
+                    logger.LogTrace("CultureDto object dump: {MappedCultureToString}", culture.ToString());
+
                     return culture;
                 }
             }
 
-            return default;
+            return null;
         }
 
         /// <summary>
-        /// Gets the CountryInfo for the given country.
+        /// Gets the <see cref="CountryInfo"/> for the given country.
         /// </summary>
         /// <param name="country"> Country.</param>
         /// <returns>CountryInfo.</returns>

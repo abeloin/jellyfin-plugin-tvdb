@@ -97,7 +97,7 @@ public class TvdbSeriesImageProvider : IRemoteImageProvider
             var artworkLanguage = artwork.Language is null ? null : languageLookup.GetValueOrDefault(artwork.Language);
 
             // only add if valid RemoteImageInfo
-            remoteImages.AddIfNotNull(artwork.CreateImageInfo(Name, imageType, artworkLanguage));
+            remoteImages.AddIfNotNull(artwork.CreateImageInfo(Name, imageType, artworkLanguage, _logger));
         }
 
         return remoteImages.OrderByLanguageDescending(item.GetPreferredMetadataLanguage());
